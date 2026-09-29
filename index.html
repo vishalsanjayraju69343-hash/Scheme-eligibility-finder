@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Scheme Eligibility Finder</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #222;
+        }
+
+        header {
+            background: #174ea6;
+            color: white;
+            padding: 35px 20px;
+            text-align: center;
+        }
+
+        header h1 {
+            margin: 0;
+            font-size: 36px;
+        }
+
+        header p {
+            font-size: 18px;
+            margin-bottom: 0;
+        }
+
+        .container {
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #174ea6;
+        }
+
+        label {
+            display: block;
+            margin-top: 20px;
+            margin-bottom: 7px;
+            font-weight: bold;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 13px;
+            border: 1px solid #ccc;
+            border-radius: 7px;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            margin-top: 25px;
+            border: none;
+            border-radius: 7px;
+            background: #174ea6;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #0d3b80;
+        }
+
+        #results {
+            margin-top: 30px;
+        }
+
+        .scheme {
+            border-left: 6px solid #174ea6;
+            background: #eef4ff;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+        }
+
+        .scheme h3 {
+            color: #174ea6;
+            margin-top: 0;
+        }
+
+        .scheme a {
+            display: inline-block;
+            margin-top: 10px;
+            color: #174ea6;
+            font-weight: bold;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 15px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+
+<body>
+
+    <header>
+        <h1>Scheme Eligibility Finder</h1>
+        <p>Find government schemes based on your details</p>
+    </header>
+
+
+    <div class="container">
+
+        <h2>Tell us about yourself</h2>
+
+        <label>Age</label>
+        <input type="number" id="age" placeholder="Enter your age">
+
+
+        <label>Annual Family Income</label>
+        <input type="number" id="income" placeholder="Example: 250000">
+
+
+        <label>Social Category</label>
+        <select id="category">
+
+            <option value="">Select category</option>
+
+            <option value="general">
+                General
+            </option>
+
+            <option value="sc">
+                Scheduled Caste (SC)
+            </option>
+
+            <option value="st">
+                Scheduled Tribe (ST)
+            </option>
+
+            <option value="obc">
+                Other Backward Class (OBC)
+            </option>
+
+            <option value="ews">
+                Economically Weaker Section (EWS)
+            </option>
+
+            <option value="dnt">
+                Denotified/Nomadic Tribe (DNT)
+            </option>
+
+        </select>
+
+
+        <label>Occupation</label>
+
+        <select id="occupation">
+
+            <option value="">Select occupation</option>
+
+            <option value="student">
+                Student
+            </option>
+
+            <option value="farmer">
+                Farmer
+            </option>
+
+            <option value="employee">
+                Employee
+            </option>
+
+            <option value="unemployed">
+                Unemployed
+            </option>
+
+            <option value="business">
+                Business
+            </option>
+
+            <option value="other">
+                Other
+            </option>
+
+        </select>
+
+
+        <label>Do you live in an urban area?</label>
+
+        <select id="urban">
+
+            <option value="">
+                Select
+            </option>
+
+            <option value="yes">
+                Yes
+            </option>
+
+            <option value="no">
+                No
+            </option>
+
+        </select>
+
+
+        <label>Do you own a pucca house anywhere in India?</label>
+
+        <select id="house">
+
+            <option value="">
+                Select
+            </option>
+
+            <option value="yes">
+                Yes
+            </option>
+
+            <option value="no">
+                No
+            </option>
+
+        </select>
+
+
+        <button onclick="findSchemes()">
+            Find My Schemes
+        </button>
+
+
+        <div id="results"></div>
+
+    </div>
+
+
+<script>
+
+function findSchemes() {
+
+    const age =
+        Number(document.getElementById("age").value);
+
+    const income =
+        Number(document.getElementById("income").value);
+
+    const category =
+        document.getElementById("category").value;
+
+    const occupation =
+        document.getElementById("occupation").value;
+
+    const urban =
+        document.getElementById("urban").value;
+
+    const house =
+        document.getElementById("house").value;
+
+    const results =
+        document.getElementById("results");
+
+
+    results.innerHTML = "";
+
+
+    if (
+        !age ||
+        !income ||
+        !category ||
+        !occupation ||
+        !urban ||
+        !house
+    ) {
+
+        results.innerHTML = `
+            <div class="warning">
+                Please fill in all the details before searching.
+            </div>
+        `;
+
+        return;
+    }
+
+
+    let found = 0;
+
+
+    /*
+    ============================================
+    PMAY - URBAN
+    ============================================
+
+    Basic criteria used here:
+
+    EWS: income up to ₹3 lakh
+    LIG: ₹3,00,001 - ₹6 lakh
+    MIG-I: ₹6,00,001 - ₹12 lakh
+    MIG-II: ₹12,00,001 - ₹18 lakh
+
+    Applicant/family must not own a
+    pucca house anywhere in India.
+
+    This checker also requires the applicant
+    to indicate an urban area.
+    */
+
+    if (
+        urban === "yes" &&
+        house === "no" &&
+        income <= 1800000
+    ) {
+
+        let incomeGroup = "";
+
+        if (income <= 300000) {
+            incomeGroup = "EWS";
+        }
+        else if (income <= 600000) {
+            incomeGroup = "LIG";
+        }
+        else if (income <= 1200000) {
+            incomeGroup = "MIG-I";
+        }
+        else {
+            incomeGroup = "MIG-II";
+        }
+
+
+        results.innerHTML += `
+
+            <div class="scheme">
+
+                <h3>
+                    Pradhan Mantri Awas Yojana - Urban
+                </h3>
+
+                <p>
+                    Your income falls within the
+                    PMAY-U income categories.
+                </p>
+
+                <p>
+                    <strong>Income category:</strong>
+                    ${incomeGroup}
+                </p>
+
+                <p>
+                    You indicated that you live in
+                    an urban area and do not own a
+                    pucca house.
+                </p>
+
+                <p>
+                    These are important eligibility
+                    conditions, but final eligibility
+                    depends on the applicable PMAY-U
+                    component and official verification.
+                </p>
+
+                <a
+                    href="https://www.myscheme.gov.in/schemes/pmay-u"
+                    target="_blank">
+                    View official scheme details
+                </a>
+
+            </div>
+
+        `;
+
+        found++;
+    }
+
+
+    /*
+    ============================================
+    PM-DAKSH
+    ============================================
+
+    Age: 18-45
+
+    Eligible target groups include:
+
+    SC
+    OBC
+    EWS
+    DNT
+    Safai Mitras / Waste Pickers
+
+    OBC/EWS:
+    annual family income below ₹3 lakh
+
+    SC/DNT:
+    no income limit according to
+    the myScheme eligibility information.
+    */
+
+    let pmdakshEligible = false;
+
+
+    if (
+        age >= 18 &&
+        age <= 45
+    ) {
+
+        if (category === "sc") {
+
+            pmdakshEligible = true;
+
+        }
+
+        else if (category === "dnt") {
+
+            pmdakshEligible = true;
+
+        }
+
+        else if (
+            category === "obc" &&
+            income < 300000
+        ) {
+
+            pmdakshEligible = true;
+
+        }
+
+        else if (
+            category === "ews" &&
+            income < 300000
+        ) {
+
+            pmdakshEligible = true;
+
+        }
+
+    }
+
+
+    if (pmdakshEligible) {
+
+        results.innerHTML += `
+
+            <div class="scheme">
+
+                <h3>
+                    PM-DAKSH
+                </h3>
+
+                <p>
+                    Pradhan Mantri Dakshta Aur Kushalta
+                    Sampann Hitgrahi
+                </p>
+
+                <p>
+                    The scheme provides skill-development
+                    training for eligible groups.
+                </p>
+
+                <p>
+                    <strong>Your age:</strong>
+                    ${age}
+                </p>
+
+                <p>
+                    <strong>Your category:</strong>
+                    ${category.toUpperCase()}
+                </p>
+
+                <p>
+                    Based on the information entered,
+                    you match the basic age and
+                    category/income conditions checked
+                    by this website.
+                </p>
+
+                <a
+                    href="https://www.myscheme.gov.in/schemes/pm-daksh"
+                    target="_blank">
+                    View official scheme details
+                </a>
+
+            </div>
+
+        `;
+
+        found++;
+    }
+
+
+    /*
+    ============================================
+    PM-GKAY
+    ============================================
+
+    This scheme is linked to households belonging
+    to AAY or PHH categories.
+
+    Our current form does NOT ask whether the user
+    belongs to AAY/PHH.
+
+    Therefore we don't claim eligibility here.
+    Instead, we can show information about it.
+    */
+
+    results.innerHTML += `
+
+        <div class="scheme">
+
+            <h3>
+                Pradhan Mantri Garib Kalyan Anna Yojana
+            </h3>
+
+            <p>
+                This foodgrain support is available
+                to eligible Antyodaya Anna Yojana
+                (AAY) and Priority Household (PHH)
+                beneficiaries.
+            </p>
+
+            <p>
+                Our current questionnaire does not
+                collect AAY/PHH status, so this
+                website cannot determine eligibility
+                for this scheme yet.
+            </p>
+
+            <a
+                href="https://www.myscheme.gov.in/schemes/pm-gkay"
+                target="_blank">
+                View official scheme details
+            </a>
+
+        </div>
+
+    `;
+
+
+    if (found === 0) {
+
+        results.innerHTML = `
+
+            <div class="warning">
+
+                <strong>
+                    No schemes matched the information
+                    checked by this version.
+                </strong>
+
+                <p>
+                    This does not mean you are
+                    ineligible for all government
+                    schemes. The website currently
+                    checks only a limited number of
+                    schemes and criteria.
+                </p>
+
+            </div>
+
+        ` + results.innerHTML;
+
+    }
+
+}
+
+</script>
+
+</body>
+
+</html>
